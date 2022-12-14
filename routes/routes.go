@@ -6,6 +6,7 @@ import (
 )
 
 func NewRouter(registrationController controllers.RegistrationsControllerInterface, paymentController controllers.PaymentControllerInterface) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.POST("/register", registrationController.CreateRegistration)
 	router.POST("/register/verify", registrationController.GetRegistration)
