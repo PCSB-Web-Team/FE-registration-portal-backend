@@ -43,7 +43,7 @@ func NewApp() Initiators {
 }
 
 func (app *app) Start(port string) {
-	if err := app.router.Run(port); err != nil {
+	if err := app.router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server at %s, %s", port, err.Error())
 	}
 }
