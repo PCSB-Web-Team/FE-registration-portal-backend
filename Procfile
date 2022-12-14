@@ -1,1 +1,1 @@
-web: build/application
+web: bin/application
