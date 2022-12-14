@@ -24,7 +24,7 @@ func createDBClient() *dynamodb.DynamoDB {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	return dynamodb.New(sess, sess.Config.WithRegion("us-east-1"))
+	return dynamodb.New(sess, sess.Config.WithRegion("ap-south-1"))
 }
 
 func NewRegistrationTableInstance() RegistrationsActions {

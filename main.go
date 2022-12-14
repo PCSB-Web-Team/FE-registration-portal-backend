@@ -6,7 +6,7 @@ import (
 	"github.com/PCSB-Web-Team/FE-registration-portal-backend/api"
 )
 
-func init() {
+func main() {
 	server := api.NewServer()
 	server.Start(os.Getenv("PORT"))
 }
