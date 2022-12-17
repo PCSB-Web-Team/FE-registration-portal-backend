@@ -9,7 +9,7 @@ import (
 )
 
 type PaymentInterface interface {
-	CreateOrder(studentDetails models.Registration) (*map[string]interface{}, error)
+	CreateOrder(studentDetails *models.Registration) (map[string]interface{}, error)
 	FetchPayment(paymentId string) (map[string]interface{}, error)
 }
 
@@ -24,7 +24,7 @@ func NewPaymentClient(RAZORPAY_KEY_ID string, RAZORPAY_KEY_SECRET string) Paymen
 	}
 }
 
-func (c *paymentClient) CreateOrder(studentDetails models.Registration) (*map[string]interface{}, error) {
+func (c *paymentClient) CreateOrder(studentDetails *models.Registration) (map[string]interface{}, error) {
 	receipt := fmt.Sprintf("%v_%v", time.Now().Unix(), studentDetails.RollNo)
 	data := map[string]interface{}{
 		"amount":          35000,
@@ -39,7 +39,7 @@ func (c *paymentClient) CreateOrder(studentDetails models.Registration) (*map[st
 	if err != nil {
 		return nil, err
 	}
-	return &orderResponseBody, nil
+	return orderResponseBody, nil
 }
 
 func (c *paymentClient) FetchPayment(paymentId string) (map[string]interface{}, error) {

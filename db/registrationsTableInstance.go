@@ -12,7 +12,7 @@ import (
 
 type RegistrationsActions interface {
 	CreateRegistration(*models.Registration) (*models.Registration, error)
-	GetRegistration(email string) (models.Registration, error)
+	GetRegistration(email string) (*models.Registration, error)
 }
 
 type registrationTable struct {
@@ -51,7 +51,7 @@ func (rt *registrationTable) CreateRegistration(registration *models.Registratio
 	return registration, nil
 }
 
-func (rt *registrationTable) GetRegistration(email string) (models.Registration, error) {
+func (rt *registrationTable) GetRegistration(email string) (*models.Registration, error) {
 	dynamodbClient := createDBClient()
 	result, err := dynamodbClient.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(rt.tableName),
@@ -63,17 +63,17 @@ func (rt *registrationTable) GetRegistration(email string) (models.Registration,
 	})
 
 	if err != nil {
-		return models.Registration{}, fmt.Errorf("error retrieving registration for '%s': %s", email, err)
+		return nil, fmt.Errorf("error retrieving registration for '%s': %s", email, err)
 	}
 	if result.Item == nil {
-		return models.Registration{}, fmt.Errorf("'%s' is not registered", email)
+		return nil, fmt.Errorf("'%s' is not registered", email)
 	}
 
 	item := models.Registration{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &item)
 	if err != nil {
-		return models.Registration{}, fmt.Errorf("failed to unmarshal record from database: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal record from database: %s", err)
 	}
-	return item, nil
+	return &item, nil
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -15,6 +14,7 @@ import (
 type PaymentControllerInterface interface {
 	CreateOrder(ctx *gin.Context)
 	VerifyPayment(ctx *gin.Context)
+	GetPayment(ctx *gin.Context)
 }
 
 type paymentController struct {
@@ -32,29 +32,26 @@ func NewPaymentController(db db.RegistrationsActions, paymentClient services.Pay
 func (c *paymentController) CreateOrder(ctx *gin.Context) {
 	var req models.GetRegistration
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(fmt.Errorf("error while parsing request: %v", err.Error())))
 		return
 	}
 
 	result, notExist := c.DB.GetRegistration(req.Email)
 	if notExist != nil {
-		ctx.JSON(http.StatusForbidden, utils.ErrorResponse(notExist))
+		ctx.JSON(http.StatusForbidden, utils.ErrorResponse(fmt.Errorf("error while fetching user: %v", notExist.Error())))
 		return
 	}
 	if result.PaymentID != "" {
-		ctx.JSON(http.StatusNotAcceptable, utils.ErrorResponse(fmt.Errorf("email '%s' is already being used and registered successfully", result.Email)))
+		ctx.JSON(http.StatusFound, result)
 		return
 	}
 
 	createdOrder, err := c.paymentClient.CreateOrder(result)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(fmt.Errorf("error while creating order: %v", err.Error())))
+		return
 	}
-	orderJSON, err := json.Marshal(createdOrder)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
-	}
-	ctx.JSON(http.StatusCreated, orderJSON)
+	ctx.JSON(http.StatusCreated, createdOrder["id"])
 }
 
 func (c *paymentController) VerifyPayment(ctx *gin.Context) {
@@ -70,29 +67,36 @@ func (c *paymentController) VerifyPayment(ctx *gin.Context) {
 
 	// if generated_signature == successfulPaymentResponse.Razorpay_signature {
 	// }
-	paymentStatus, err := c.paymentClient.FetchPayment(successfulPaymentResponse.Razorpay_payment_id)
-	if err != nil {
-		fmt.Printf("error from razorpay while verifying payment: %v\n", err.Error())
-		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
-		return
-	}
+
 	// type paymentOptions struct {
 	// 	notes map[string]string
 	// }
 
 	// payment, _ := json.Marshal(paymentStatus)
 
-	result, err := c.DB.GetRegistration(paymentStatus["notes"].(map[string]string)["email"])
+	result, err := c.DB.GetRegistration(successfulPaymentResponse.Email)
 	if err != nil {
-		fmt.Printf("error from aws while verifying payment: %v\n", err.Error())
+		fmt.Printf("error from server while verifying payment: %v\n", err.Error())
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
 		return
 	}
 	result.PaymentID = successfulPaymentResponse.Razorpay_payment_id
-	_, err = c.DB.CreateRegistration(&result)
+	registeredUser, err := c.DB.CreateRegistration(result)
 	if err != nil {
-		fmt.Printf("error from aws while verifying payment: %v\n", err.Error())
+		fmt.Printf("error from server while verifying payment: %v\n", err.Error())
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
 		return
 	}
+	ctx.JSON(http.StatusOK, registeredUser)
+}
+
+func (c *paymentController) GetPayment(ctx *gin.Context) {
+	result, err := c.paymentClient.FetchPayment(ctx.Query("id"))
+	if err != nil {
+		fmt.Printf("error from server while fetching payment: %v\n", err.Error())
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusFound, result["notes"])
 }

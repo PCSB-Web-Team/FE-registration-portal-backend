@@ -33,7 +33,7 @@ func NewApp() Initiators {
 	registrationTableDBClient := db.NewRegistrationTableInstance()
 	registrationsControllers := controllers.NewRegistrationsController(registrationTableDBClient)
 	paymentControllers := controllers.NewPaymentController(registrationTableDBClient, paymentClient)
-	router := routes.NewRouter(registrationsControllers, paymentControllers)
+	router := routes.NewRouter(os.Getenv("FRONTEND_URL"), registrationsControllers, paymentControllers)
 	return &app{
 		registrationTableDBClient,
 		registrationsControllers,

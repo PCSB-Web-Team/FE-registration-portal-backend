@@ -1,11 +1,6 @@
 package utils
 
-import (
-	// "encoding/json"
-	// "fmt"
-
-	"github.com/gin-gonic/gin"
-)
+import "github.com/gin-gonic/gin"
 
 func ErrorResponse(err error) gin.H {
 	// errJSON, _ := json.Marshal(err)

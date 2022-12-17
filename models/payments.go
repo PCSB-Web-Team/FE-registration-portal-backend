@@ -9,7 +9,8 @@ type CreatedOrder struct {
 }
 
 type SuccessfulPayment struct {
-	Razorpay_payment_id string `json:"razorpay_payment_id"`
+	Email               string `json:"email" binding:"required"`
+	Razorpay_payment_id string `json:"razorpay_payment_id" binding:"required"`
 	Razorpay_order_id   string `json:"razorpay_order_id"`
 	Razorpay_signature  string `json:"razorpay_signature"`
 }
