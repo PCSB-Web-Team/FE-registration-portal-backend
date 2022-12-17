@@ -27,7 +27,7 @@ func NewPaymentClient(RAZORPAY_KEY_ID string, RAZORPAY_KEY_SECRET string) Paymen
 func (c *paymentClient) CreateOrder(studentDetails *models.Registration) (map[string]interface{}, error) {
 	receipt := fmt.Sprintf("%v_%v", time.Now().Unix(), studentDetails.RollNo)
 	data := map[string]interface{}{
-		"amount":          35000,
+		"amount":          36000,
 		"currency":        "INR",
 		"receipt":         receipt,
 		"partial_payment": false,
