@@ -9,7 +9,6 @@ import (
 	"github.com/PCSB-Web-Team/FE-registration-portal-backend/routes"
 	"github.com/PCSB-Web-Team/FE-registration-portal-backend/services"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 type Initiators interface {
@@ -24,10 +23,6 @@ type app struct {
 }
 
 func NewApp() Initiators {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
 	var paymentClient services.PaymentInterface = services.NewPaymentClient(os.Getenv("RAZORPAY_KEY_ID"), os.Getenv("RAZORPAY_KEY_SECRET"))
 
 	registrationTableDBClient := db.NewRegistrationTableInstance()
