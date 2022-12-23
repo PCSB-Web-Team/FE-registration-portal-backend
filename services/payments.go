@@ -11,6 +11,7 @@ import (
 type PaymentInterface interface {
 	CreateOrder(studentDetails *models.Registration) (map[string]interface{}, error)
 	FetchPayment(paymentId string) (map[string]interface{}, error)
+	FetchAllPayment() (map[string]interface{}, error)
 }
 
 type paymentClient struct {
@@ -48,4 +49,16 @@ func (c *paymentClient) FetchPayment(paymentId string) (map[string]interface{}, 
 		return nil, err
 	}
 	return paymentStatus, nil
+}
+
+func (c *paymentClient) FetchAllPayment() (map[string]interface{}, error) {
+	data := map[string]interface{}{
+		"count": 100,
+	}
+
+	body, err := c.client.Payment.All(data, nil)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }

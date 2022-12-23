@@ -91,12 +91,28 @@ func (c *paymentController) VerifyPayment(ctx *gin.Context) {
 }
 
 func (c *paymentController) GetPayment(ctx *gin.Context) {
-	result, err := c.paymentClient.FetchPayment(ctx.Query("id"))
+	registration, err := c.DB.GetRegistration(ctx.Query("id"))
+	if err != nil {
+		fmt.Printf("no registration for : %v\n", ctx.Query("id"))
+		ctx.JSON(http.StatusPartialContent, utils.ErrorResponse(fmt.Errorf("no registration for '%v' please fill the form first", ctx.Query("id"))))
+		return
+	}
+	if registration.PaymentID != "" {
+		ctx.JSON(http.StatusFound, registration)
+		return
+	}
+	result, err := c.paymentClient.FetchAllPayment()
 	if err != nil {
 		fmt.Printf("error from server while fetching payment: %v\n", err.Error())
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(err))
 		return
 	}
-
-	ctx.JSON(http.StatusFound, result["notes"])
+	for _, payment := range result["items"].([]interface{}) {
+		if payment.(map[string]interface{})["email"] == registration.Email {
+			ctx.JSON(http.StatusFound, registration)
+			return
+		}
+	}
+	fmt.Printf("no payment found for : %v\n", ctx.Query("id"))
+	ctx.JSON(http.StatusPartialContent, utils.ErrorResponse(fmt.Errorf("no payment found for %v please complete payment with the same email", ctx.Query("id"))))
 }
