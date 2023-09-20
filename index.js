@@ -12,11 +12,10 @@ process.on("uncaughtException", (err) => {
 
 // config
 
-// connecting database
-connectDatabase();
-
-app.listen(APP_PORT || 8080, () => {
-  console.log(`server is listening on port ${APP_PORT || 8080}`);
+app.listen(APP_PORT || 8080, async () => {
+  // connecting database
+  await connectDatabase();
+  console.log(`🚀 server is listening on port ${APP_PORT || 8080}`);
 });
 
 // Unhandled Promise Rejection
