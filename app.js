@@ -43,14 +43,38 @@ app.get("/users/:token", async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || 10; // Default page size
 
   try {
+    const uniqueUsers = await User.aggregate([
+      {
+        $group: {
+          _id: "$email", // Group by email addresses
+          user: { $first: "$$ROOT" }, // Keep the first document encountered for each email
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: [
+              "$user",
+              { receiptImage: undefined }, // Exclude the receiptImage field
+            ],
+          },
+        },
+      },
+    ]);
+
+    const totalUsers = uniqueUsers.length; // Total number of unique users
+
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const pageSize = parseInt(req.query.pageSize) || 10; // Default page size
     const skip = (page - 1) * pageSize;
-    const totalUsers = await User.countDocuments(); // Get the total number of users
-    const users = await User.find({}, "-receiptImage").skip(skip).limit(pageSize);
+
+    // Get the users for the current page
+    const usersForPage = uniqueUsers.slice(skip, skip + pageSize);
 
     const totalPages = Math.ceil(totalUsers / pageSize);
 
     res.status(200).json({
-      users,
+      users: usersForPage,
       pageInfo: {
         currentPage: page,
         pageSize,
@@ -58,25 +82,6 @@ app.get("/users/:token", async (req, res) => {
         totalUsers,
       },
     });
-  } catch (error) {
-    console.error("Error retrieving paginated users:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get("/users/:id/:token", async (req, res) => {
-  if (!req.params.token || req.params.token !== ADMIN_TOKEN) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.status(200).json(user);
   } catch (error) {
     console.error("Error retrieving user:", error);
     res.status(500).json({ error: "Internal server error" });
